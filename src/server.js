@@ -7,5 +7,5 @@ connectDB();
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () =>
-  console.log(`✅ Smart LMS server running at http://localhost:${PORT}`)
+  console.log(`✅ Smart LMS server running at https://anandaraj-sir-project-1-backend.onrender.com`)
 );

@@ -23,13 +23,17 @@ connectDB();
 
 const app = express();
 
-// ✅ Middleware
+// ✅ CORS updated for deployed frontend
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: [
+      process.env.FRONTEND_URL || "http://localhost:5173",
+      "https://anandaraj-sir-project-1-frontend.vercel.app"
+    ],
     credentials: true,
   })
 );
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -51,11 +55,11 @@ app.get("/", (req, res) => {
   res.send("📚 Smart LMS API Running...");
 });
 
-// 🔹 Admin Auth (login/register)
+// 🔹 Admin Auth
 app.use("/api/admin", adminAuthRoutes);
 
-// 🔹 Student Auth (Google, profile update, etc.)
-app.use("/api/auth", studentAuthRoutes); // ✅ Keep this as-is
+// 🔹 Student Auth (Google, profile update)
+app.use("/api/auth", studentAuthRoutes);
 
 // 🔹 Admin feature routes
 app.use("/api/admin", adminRoutes);
@@ -70,7 +74,6 @@ app.use("/api/units", unitRoutes);
 
 // 🔹 Static uploads
 app.use("/uploads", express.static("uploads"));
-
 
 app.use("/api/student", studentSelfTestRoutes);
 

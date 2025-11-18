@@ -8,29 +8,44 @@ dotenv.config();
 const router = express.Router();
 
 // 🔹 Step 1: Google login
-router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+router.get(
+  "/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
 
 // 🔹 Step 2: Google callback
 router.get(
   "/google/callback",
-  passport.authenticate("google", { session: false, failureRedirect: "/student/login" }),
+  passport.authenticate("google", {
+    session: false,
+    failureRedirect:
+      `${process.env.FRONTEND_URL || "https://anandaraj-sir-project-1-frontend.vercel.app"}/student/login`,
+  }),
   async (req, res) => {
     try {
       const student = req.user;
       if (!student) {
-        return res.redirect(`${process.env.FRONTEND_URL}/student/login?error=auth_failed`);
+        return res.redirect(
+          `${process.env.FRONTEND_URL || "https://anandaraj-sir-project-1-frontend.vercel.app"}/student/login?error=auth_failed`
+        );
       }
 
       // Generate JWT
-      const token = jwt.sign({ id: student._id, role: "student" }, process.env.JWT_SECRET, {
-        expiresIn: "30d",
-      });
+      const token = jwt.sign(
+        { id: student._id, role: "student" },
+        process.env.JWT_SECRET,
+        { expiresIn: "30d" }
+      );
 
-      // ✅ Redirect back to LOGIN PAGE (so we can extract & store token properly)
-      res.redirect(`${process.env.FRONTEND_URL}/student/login?token=${token}`);
+      // Redirect back to frontend login page
+      res.redirect(
+        `${process.env.FRONTEND_URL || "https://anandaraj-sir-project-1-frontend.vercel.app"}/student/login?token=${token}`
+      );
     } catch (err) {
       console.error("Error during Google callback:", err);
-      res.redirect(`${process.env.FRONTEND_URL}/student/login?error=server_error`);
+      res.redirect(
+        `${process.env.FRONTEND_URL || "https://anandaraj-sir-project-1-frontend.vercel.app"}/student/login?error=server_error`
+      );
     }
   }
 );
