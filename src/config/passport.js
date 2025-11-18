@@ -1,43 +1,46 @@
-// src/config/passport.js
-import dotenv from "dotenv";
-dotenv.config(); // 👈 MUST be here at the very top
-
+// backend/config/passport.js
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import dotenv from "dotenv";
 import Student from "../models/Student.js";
+
+dotenv.config();
 
 passport.use(
   new GoogleStrategy(
     {
-      clientID: process.env.GOOGLE_CLIENT_ID, // ✅ these should not be undefined
+      clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: `${process.env.BACKEND_URL}/api/auth/google/callback`,
+      callbackURL: "http://localhost:5000/api/auth/google/callback",
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        let student = await Student.findOne({ googleId: profile.id });
+        const email = profile.emails[0].value;
+        const name = profile.displayName;
 
+        // ✅ Step 1: Check if student already exists
+        let student = await Student.findOne({ email });
+
+        // ✅ Step 2: If not, create a new record
         if (!student) {
-          student = await Student.create({
-            googleId: profile.id,
-            email: profile.emails[0].value,
-            name: profile.displayName,
-          });
-        }
+  student = new Student({
+    email,
+    name: "", // Keep empty so frontend detects incomplete profile
+    department: "", // Keep empty
+    googleName: profile.displayName // if you want to store Google name separately
+  });
+  await student.save();
+}
 
+
+        // ✅ Step 3: Return student to callback
         return done(null, student);
       } catch (err) {
+        console.error("Error in Google Strategy:", err);
         return done(err, null);
       }
     }
   )
 );
 
-passport.serializeUser((student, done) => {
-  done(null, student.id);
-});
-
-passport.deserializeUser(async (id, done) => {
-  const student = await Student.findById(id);
-  done(null, student);
-});
+export default passport;

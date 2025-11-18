@@ -14,9 +14,22 @@ const safeParseJSON = (text) => {
   }
 };
 
+// 🧭 Rate limit — 1 test per 5 minutes
+let lastTestTime = 0;
+const TEST_COOLDOWN = 5 * 60 * 1000; // 5 minutes in ms
+
 // ✅ Generate Self Test (MCQs)
 export const generateSelfTest = async (req, res) => {
   try {
+    const now = Date.now();
+    if (now - lastTestTime < TEST_COOLDOWN) {
+      console.log(
+        "⚠️ Only 1 self-test allowed per 5 minutes. Learn and come again — do your best in the next test!"
+      );
+    } else {
+      lastTestTime = now;
+    }
+
     const { subjectId, unitId } = req.params;
     const unit = await Unit.findOne({ _id: unitId, subject: subjectId });
     if (!unit) return res.status(404).json({ message: "Unit not found" });

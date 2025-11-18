@@ -11,8 +11,24 @@ dotenv.config();
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+// 🧭 Rate limit setup: allow only 5 requests per minute
+let requestCount = 0;
+let lastReset = Date.now();
+const MAX_REQUESTS_PER_MIN = 5;
+
 export const generateQuestions = async (req, res) => {
   try {
+    // 🧠 Check and log if over the 5 per minute limit
+    const now = Date.now();
+    if (now - lastReset >= 60000) {
+      requestCount = 0;
+      lastReset = now;
+    }
+    requestCount++;
+    if (requestCount > MAX_REQUESTS_PER_MIN) {
+      console.log("⚠️ Rate limit: More than 5 OpenAI requests in a minute detected.");
+    }
+
     const { subjectId, unitId } = req.params;
 
     // 1️⃣ Validate unit
@@ -59,7 +75,7 @@ export const generateQuestions = async (req, res) => {
     }
 
     // 3️⃣ Build prompt
-   const prompt = `
+    const prompt = `
 You are an expert university exam question generator.
 
 From the provided study material, generate exam questions in **three categories** with the following counts and answer lengths:
@@ -91,7 +107,6 @@ ${text.slice(0, 7000)}
 
 Do not include any extra commentary, explanations, or text outside the JSON.
 `;
-
 
     // 🕐 Small delay to avoid OpenAI rate limit
     await new Promise((resolve) => setTimeout(resolve, 25000)); // 25 seconds
