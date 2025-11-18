@@ -1,8 +1,8 @@
-// backend/config/passport.js
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import dotenv from "dotenv";
 import Student from "../models/Student.js";
+import jwt from "jsonwebtoken";
 
 dotenv.config();
 
@@ -16,23 +16,19 @@ passport.use(
     async (accessToken, refreshToken, profile, done) => {
       try {
         const email = profile.emails[0].value;
-        const name = profile.displayName;
 
-        // ✅ Step 1: Check if student already exists
         let student = await Student.findOne({ email });
 
-        // ✅ Step 2: If not, create a new record
         if (!student) {
           student = new Student({
             email,
-            name: "", // Keep empty so frontend detects incomplete profile
-            department: "", // Keep empty
-            googleName: profile.displayName // if you want to store Google name separately
+            name: "", // leave blank for frontend setup
+            department: "",
+            googleName: profile.displayName,
           });
           await student.save();
         }
 
-        // ✅ Step 3: Return student to callback
         return done(null, student);
       } catch (err) {
         console.error("Error in Google Strategy:", err);
@@ -42,4 +38,18 @@ passport.use(
   )
 );
 
-export default passport;
+// Serialize & deserialize for session
+passport.serializeUser((user, done) => done(null, user._id));
+passport.deserializeUser(async (id, done) => {
+  const student = await Student.findById(id);
+  done(null, student);
+});
+
+// Helper to generate JWT token
+export const generateToken = (student) => {
+  return jwt.sign(
+    { id: student._id, email: student.email },
+    process.env.JWT_SECRET || "secretkey",
+    { expiresIn: "7d" }
+  );
+};

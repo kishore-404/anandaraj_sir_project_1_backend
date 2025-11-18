@@ -28,7 +28,7 @@ app.use(
   cors({
     origin: [
       process.env.FRONTEND_URL || "http://localhost:5173",
-      "https://anandaraj-sir-project-1-frontend.vercel.app"
+      "https://anandaraj-sir-project-1-frontend.vercel.app",
     ],
     credentials: true,
   })
@@ -40,7 +40,7 @@ app.use(express.urlencoded({ extended: true }));
 // ✅ Session (required for passport Google OAuth)
 app.use(
   session({
-    secret: "keyboard cat",
+    secret: process.env.SESSION_SECRET || "keyboard cat",
     resave: false,
     saveUninitialized: false,
   })
@@ -58,7 +58,7 @@ app.get("/", (req, res) => {
 // 🔹 Admin Auth
 app.use("/api/admin", adminAuthRoutes);
 
-// 🔹 Student Auth (Google, profile update)
+// 🔹 Student Auth (Google login + profile update)
 app.use("/api/auth", studentAuthRoutes);
 
 // 🔹 Admin feature routes
@@ -75,6 +75,7 @@ app.use("/api/units", unitRoutes);
 // 🔹 Static uploads
 app.use("/uploads", express.static("uploads"));
 
+// 🔹 Student self-test
 app.use("/api/student", studentSelfTestRoutes);
 
 export default app;

@@ -16,11 +16,7 @@ router.get(
 // 🔹 Step 2: Google callback
 router.get(
   "/google/callback",
-  passport.authenticate("google", {
-    session: false,
-    failureRedirect:
-      `${process.env.FRONTEND_URL || "https://anandaraj-sir-project-1-frontend.vercel.app"}/student/login`,
-  }),
+  passport.authenticate("google", { session: false, failureRedirect: `${process.env.FRONTEND_URL || "https://anandaraj-sir-project-1-frontend.vercel.app"}/student/login` }),
   async (req, res) => {
     try {
       const student = req.user;
@@ -30,14 +26,14 @@ router.get(
         );
       }
 
-      // Generate JWT
+      // Generate JWT token
       const token = jwt.sign(
         { id: student._id, role: "student" },
         process.env.JWT_SECRET,
         { expiresIn: "30d" }
       );
 
-      // Redirect back to frontend login page
+      // Redirect to frontend with token
       res.redirect(
         `${process.env.FRONTEND_URL || "https://anandaraj-sir-project-1-frontend.vercel.app"}/student/login?token=${token}`
       );
@@ -61,7 +57,7 @@ router.get("/me", async (req, res) => {
     const token = authHeader.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const student = await Student.findById(decoded.id).select("-__v");
+    const student = await Student.findById(decoded.id).select("-__v -password");
     if (!student) return res.status(404).json({ message: "Student not found" });
 
     res.json(student);
